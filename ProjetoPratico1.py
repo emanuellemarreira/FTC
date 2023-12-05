@@ -1,4 +1,4 @@
-# Programa em python que simula transações pix, as validando ou não,
+# programa em python que simula transações pix, as validando ou não,
 # utilizando expressoes regulares
 import re
 
@@ -24,9 +24,9 @@ def validarCpf(cpf):
         resto2 = 0
 
     if resto1 == int(cpf[12]) and resto2 == int(cpf[13]) and tudo_igual == False:
-        print("true")
+        return True
     else:
-        print("false")
+        return False
 
 def validarCNPJ(cnpj): 
     soma1 = int(cnpj[0])*6 + int(cnpj[1])*7 + int(cnpj[3])*8 + int(cnpj[4])*9 + int(cnpj[5])*2 + int(cnpj[7])*3 + int(cnpj[8])*4 + int(cnpj[9])*5 + int(cnpj[11])*6 +  int(cnpj[12])*7 + int(cnpj[13])*8 + int(cnpj[14])*9
@@ -42,10 +42,44 @@ def validarCNPJ(cnpj):
         resto2 = 0
 
     if resto1 == int(cnpj[16]) and resto2 == int(cnpj[17]):
-        print("true")
+        return True
     else:
-        print("false")
+        return False
 
+def validarChaveRapida(chave_rapida):
+    if chave_rapida[0] == chave_rapida[1] or chave_rapida[3] == chave_rapida[4] or chave_rapida[6] == chave_rapida[7] or chave_rapida[9] == chave_rapida[10]:
+        return False
+    else:
+        return True
+
+def validarValor(valor):
+    if re.match("^R\$([0-9]{0,3}.)+,[0-9]{2}", valor):
+        return True
+    else:
+        return False
+
+def validarDataHora(datahora):
+    if re.match("([0-9][0-9])/([0-9][0-9])/[0-9]{4} [0-9]{2}:[0-9]{2}", datahora):
+        dia = int(datahora[0]+datahora[1])
+        mes = int(datahora[3]+datahora[4])
+        ano = int(datahora[6]+datahora[7]+datahora[8]+datahora[9])
+        hora = int(datahora[11]+datahora[12])
+        minuto = int(datahora[14]+datahora[15])
+        if dia > 31 or mes > 12 or ano < 0 or hora > 23 or minuto > 59 or \
+        ((mes == 1 or mes == 3 or mes == 5 or mes == 7 or mes == 8 or mes == 10 or mes == 12) and dia < 31) or \
+        ((mes == 4 or mes == 6 or mes == 9 or mes == 11) and dia > 30) or \
+        (mes == 2 and dia > 29):
+            return False
+        else:
+            return True
+    else:
+        return False
+
+def validarCodigoSeguranca(cod):
+    if re.match(r'^(?=(?:.*[A-Z]){3})(?=(?:.*\d){4})(?=(?:.*[$@%(*]))(?=(?:.*[a-z]){3})[A-Za-z\d@$%(*]{12}$', cod):
+        return True
+    else:
+        return False
 
 def verificarRepeticoes(entradaClientes):
     contaRepeticoes = 0
@@ -54,12 +88,12 @@ def verificarRepeticoes(entradaClientes):
             if i == j:
                 contaRepeticoes = contaRepeticoes + 1
         if contaRepeticoes > 0:
-            return False
-    return True
+            return True
+    return False
 
 
 def validarClientes(entradaClientes):
-    validacoes.append(len(entradaClientes) > 5 or len(entradaClientes) < 1)
+    validacoes.append(len(entradaClientes) <= 5 and len(entradaClientes) >= 1)
     validacoes.append(verificarRepeticoes(entradaClientes))
     validarChaves(entradaClientes)
 
@@ -67,57 +101,66 @@ def validarChaves(entrada):
     for i in entrada:    
         if re.match("[0-9]{3}[.][0-9]{3}[.][0-9]{3}[-][0-9]{2}", i): #cpf
             validacoes.append(validarCPF(i))
-        if re.match("[0-9]{2}[.][0-9]{3}[.][0-9]{3}[/][0-9]{4}[-][0-9]{2}", i): #cnpj
+        elif re.match("[0-9]{2}[.][0-9]{3}[.][0-9]{3}[/][0-9]{4}[-][0-9]{2}", i): #cnpj
             validacoes.append(validarCNPJ(i))
-        if i == email:
-            validacoes.append(validarEmail(i))
-        if i == telefone:
-            validacoes.append(validarTelefone(i))
-        if i == hexadecimal:
-            validacoes.append(validarHexadecimal(i))
+        elif re.match(r'[\w.-]+@[\w.-]+', i):
+            validacoes.append(True) #email
+        elif re.match("^\+55[\(][0-9]{2}[\)][0-9]{4}-[0-9]{4}", i):
+            validacoes.append(True)#telefone
+        elif re.match("[0-9A-F]{2}\.[0-9A-F]{2}\.[0-9A-F]{2}\.[0-9A-F]{2}", i):
+            validacoes.append(validarChaveRapida(i))#chaverapida
+        else:
+            validacoes.append(False) #nada
+
 
 def validarDadosTransacao(entradaTransacoes):
-    validarChaves(entradaTransacoes[0]+entradaTransacoes[1])
-    validacoes.append(entradaTransacoes[2] != "R$")
+    validarChaves(entradaTransacoes[0])
+    validarChaves(entradaTransacoes[1])
+    validacoes.append(entradaTransacoes[2] == "R$")
     validacoes.append(validarValor(entradaTransacoes[3]))
-    validacoes.append(validarData(entradaTransacoes[4]))
-    validacoes.append(validarHora(entradaTransacoes[5]))
+    validacoes.append(validarDataHora(entradaTransacoes[4] + " "+entradaTransacoes[5]))
     validacoes.append(validarCodigoSeguranca(entradaTransacoes[6]))
 
 def validarTransacoes(entradaTransacoes):
-    validacoes.append(len(entradaTransacoes) != 7)
+    validacoes.append(len(entradaTransacoes) == 7)
     origem = entradaTransacoes[0]
     destino = entradaTransacoes[1]
-    validacoes.append(origem == destino)
+    validacoes.append(origem != destino)
+    verifica_origem = True
+    verifica_destino = True
     for chaves in listaClientes:
-        validacoes.append(origem in chaves)
-        validacoes.append(destino in chaves)
+        if origem not in chaves:
+            verifica_origem = False
+        if destino not in chaves:
+            verifica_destino = False
+    validacoes.append(verifica_origem)
+    validacoes.append(verifica_destino)
     validarDadosTransacao(entradaTransacoes)
 
-while True:
-    entradaClientes.extend(input().split(" "))
-    if entradaClientes[0] == "==========":
-        break
 
-    validarClientes(entradaClientes)
+if __name__ == "__main__":
+        
+    while True:
+        entradaClientes.extend(input().split(" "))
+        if entradaClientes[0] == "==========":
+            break
+        validarClientes(entradaClientes)
+        listaClientes.append(entradaClientes.copy())
+        entradaClientes.clear()
 
-    listaClientes.append(entradaClientes.copy())
-    entradaClientes.clear()
-
-
-print("transacao")
-
-listaTransacoes = []
-entradaTransacoes = []
-while True:
-    try:
-        entradaTransacoes.extend(input().split(" "))
-
-        validarTransacoes(entradaTransacoes)
-
-        listaTransacoes.append(entradaTransacoes.copy())
-        entradaTransacoes.clear()
-    except:
-        break
-
+    listaTransacoes = []
+    entradaTransacoes = []
+    while True:
+        try:
+            entradaTransacoes.extend(input().split(" "))
+            validarTransacoes(entradaTransacoes)
+            listaTransacoes.append(entradaTransacoes.copy())
+            entradaTransacoes.clear()
+        except:
+            print(validacoes)
+            if False in validacoes:
+                print("False")
+            else:
+                print("True")
+            break
 
