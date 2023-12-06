@@ -2,11 +2,7 @@
 # utilizando expressoes regulares
 import re
 
-listaClientes = []
-entradaClientes = []
-validacoes = []
-
-def validar_cpf(cpf):
+def validarCPF(cpf):
     cpf_numerico = ''.join(filter(str.isdigit, cpf))
     if len(cpf_numerico) != 11:
         return False
@@ -32,7 +28,7 @@ def validar_cpf(cpf):
         return False
 
 
-def validar_cnpj(cnpj):
+def validarCNPJ(cnpj):
     cnpj_numerico = ''.join(filter(str.isdigit, cnpj))
     if len(cnpj_numerico) != 14:
         return False
@@ -112,7 +108,7 @@ def verificarRepeticoes(entradaClientes):
                     return False  # repeticoes retorna False
     return True  #sem repeticoes retorna True
 
-def validarId(id):
+def validarId(id, validacoes):
     if re.match("[0-9]{3}[.][0-9]{3}[.][0-9]{3}[-][0-9]{2}", id): #cpf
         validacoes.append(validarCPF(id))
     elif re.match("[0-9]{2}[.][0-9]{3}[.][0-9]{3}[/][0-9]{4}[-][0-9]{2}", id): #cnpj
@@ -120,17 +116,9 @@ def validarId(id):
     else:
         validacoes.append(False)
         
-
-def validarClientes(entradaClientes):
-    validacoes.append(len(entradaClientes) <= 5 and len(entradaClientes) >= 1)
-    idCliente = entradaClientes[0]
-    validarId(idCliente)
-    validacoes.append(verificarRepeticoes(entradaClientes))
-    validarChaves(entradaClientes[1:])
-
-def validarChaves(entrada):
+def validarChaves(entrada, validacoes):
     for i in entrada:    
-        if re.match(r'[\w.-]+@[\w.-]+', i):
+        if re.match('^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', i):
             validacoes.append(True) #email
         elif re.match("^\+55[\(][0-9]{2}[\)][0-9]{4}-[0-9]{4}", i):
             validacoes.append(True)#telefone
@@ -139,14 +127,20 @@ def validarChaves(entrada):
         else:
             validacoes.append(False) #nada
 
+def validarClientes(entradaClientes, validacoes):
+    validacoes.append(len(entradaClientes) <= 5 and len(entradaClientes) >= 1)
+    idCliente = entradaClientes[0]
+    validarId(idCliente,validacoes)
+    validacoes.append(verificarRepeticoes(entradaClientes))
+    validarChaves(entradaClientes[1:], validacoes)
 
-def validarDadosTransacao(entradaTransacoes):
+def validarDadosTransacao(entradaTransacoes, validacoes):
     validacoes.append(entradaTransacoes[2] == "R$")
     validacoes.append(validarValor(entradaTransacoes[3]))
-    validacoes.append(validarDataHora(entradaTransacoes[4] + " "+ entradaTransacoes[5]))
+    validacoes.append(validarDataHora(entradaTransacoes[4] + " " + entradaTransacoes[5]))
     validacoes.append(validarCodigoSeguranca(entradaTransacoes[6]))
 
-def validarTransacoes(entradaTransacoes):
+def validarTransacoes(entradaTransacoes, validacoes, listaClientes):
     validacoes.append(len(entradaTransacoes) == 7)
     origem = entradaTransacoes[0]
     destino = entradaTransacoes[1]
@@ -160,16 +154,18 @@ def validarTransacoes(entradaTransacoes):
             verifica_destino = True
     validacoes.append(verifica_origem)
     validacoes.append(verifica_destino)
-    validarDadosTransacao(entradaTransacoes)
-
+    validarDadosTransacao(entradaTransacoes, validacoes)
 
 if __name__ == "__main__":
-        
+    listaClientes = []
+    entradaClientes = []
+    validacoes = []
+
     while True:
         entradaClientes.extend(input().split(" "))
         if entradaClientes[0] == "==========":
             break
-        validarClientes(entradaClientes)
+        validarClientes(entradaClientes, validacoes)
         listaClientes.append(entradaClientes.copy())
         entradaClientes.clear()
 
@@ -177,13 +173,11 @@ if __name__ == "__main__":
     while True:
         try:
             entradaTransacoes.extend(input().split(" "))
-            validarTransacoes(entradaTransacoes)
+            validarTransacoes(entradaTransacoes, validacoes, listaClientes)
             entradaTransacoes.clear()
         except EOFError:
-            print(validacoes)
             if False in validacoes:
-                print("False", end = "")
+                print("False", end="")
             else:
-                print("True", end = "")
+                print("True", end="")
             break
-
