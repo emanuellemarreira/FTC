@@ -56,13 +56,70 @@ def validarChaveRapida(chave_rapida):
     else:
         return True
 
+def validar_cpf(cpf):
+    cpf_numerico = ''.join(filter(str.isdigit, cpf))
+    if len(cpf_numerico) != 11:
+        return False
+    total = 0
+    for i in range(9):
+        total += int(cpf_numerico[i]) * (10 - i)
+    resto = total % 11
+    if resto >= 2:
+        digito1 = 11 - resto
+    else:
+        digito1 = 0
+    total = 0
+    for i in range(10):
+        total += int(cpf_numerico[i]) * (11 - i)
+    resto = total % 11
+    if resto >= 2:
+        digito2 = 11 - resto
+    else:
+        digito2 = 0
+    if int(cpf_numerico[9]) == digito1 and int(cpf_numerico[10]) == digito2:
+        return True
+    else:
+        return False
 
-chave = "1c.C5.88.C2"
-#if re.match("[0-9A-Fa-f]{2}\.[0-9A-Fa-f]{2}\.[0-9A-Fa-f]{2}\.[0-9A-Fa-f]{2}", chave):
-#print(validarChaveRapida(chave))
+def validar_cnpj(cnpj):
+    cnpj_numerico = ''.join(filter(str.isdigit, cnpj))
+    if len(cnpj_numerico) != 14:
+        return False
+    total = 0
+    multiplicador = 5
+    for i in range(12):
+        total += int(cnpj_numerico[i]) * multiplicador
+        if multiplicador == 2:
+            multiplicador = 9
+        else:
+            multiplicador -= 1
+    resto = total % 11
+    if resto >= 2:
+        digito1 = 11 - resto
+    else:
+        digito1 = 0
+    total = 0
+    multiplicador = 6
+    for i in range(13):
+        total += int(cnpj_numerico[i]) * multiplicador
+        if multiplicador == 2:
+            multiplicador = 9
+        else:
+            multiplicador -= 1
+    resto = total % 11
+    if resto >= 2:
+        digito2 = 11 - resto
+    else:
+        digito2 = 0
+    if int(cnpj_numerico[12]) == digito1 and int(cnpj_numerico[13]) == digito2:
+        return True
+    else:
+        return False
 
-telefone = "+55(92)93348-7601"
-if re.match("^\+55[\(][0-9]{2}[\)][0-9]{4}-[0-9]{4}", telefone):
-    print("True")
+# Exemplo de uso
+cnpj_input = "11.111.111/1111-11"
+if validar_cnpj(cnpj_input):
+    print("CNPJ válido!")
 else:
-    print("False")
+    print("CNPJ inválido.")
+
