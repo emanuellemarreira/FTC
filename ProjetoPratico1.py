@@ -53,7 +53,7 @@ def validarChaveRapida(chave_rapida):
         return True
 
 def validarValor(valor):
-    if re.match("([0-9]{0,3}.)+,[0-9]{2}", valor):
+    if re.match(r'^\d{1,3}(\.\d{3})*,\d{2}$', valor):
         return True
     else:
         return False
@@ -76,7 +76,7 @@ def validarDataHora(datahora):
         return False
 
 def validarCodigoSeguranca(cod):
-    if re.match(r'^(?=(?:.*[A-Z]){3})(?=(?:.*\d){4})(?=(?:.*[$@%(*]))(?=(?:.*[a-z]){3})[A-Za-z\d@$%(*]{12}$', cod):
+    if re.match(r'^(?=(?:[^A-Z]*[A-Z]){3})(?=(?:[^\d]*\d){4})(?=(?:[^$@%(*]*[$@%(*]){2})(?=(?:[^a-z]*[a-z]){3})[A-Za-z\d$@%(*]{12}$', cod):
         return True
     else:
         return False
@@ -91,23 +91,29 @@ def verificarRepeticoes(entradaClientes):
                     return False  # repeticoes retorna False
     return True  #sem repeticoes retorna True
 
+def validarId(id):
+    if re.match("[0-9]{3}[.][0-9]{3}[.][0-9]{3}[-][0-9]{2}", id): #cpf
+        validacoes.append(validarCPF(id))
+    elif re.match("[0-9]{2}[.][0-9]{3}[.][0-9]{3}[/][0-9]{4}[-][0-9]{2}", id): #cnpj
+        validacoes.append(validarCNPJ(id))
+    else:
+        validacoes.append(False)
+        
 
 def validarClientes(entradaClientes):
     validacoes.append(len(entradaClientes) <= 5 and len(entradaClientes) >= 1)
+    idCliente = entradaClientes[0]
+    validarId(idCliente)
     validacoes.append(verificarRepeticoes(entradaClientes))
-    validarChaves(entradaClientes)
+    validarChaves(entradaClientes[1:])
 
 def validarChaves(entrada):
     for i in entrada:    
-        if re.match("[0-9]{3}[.][0-9]{3}[.][0-9]{3}[-][0-9]{2}", i): #cpf
-            validacoes.append(validarCPF(i))
-        elif re.match("[0-9]{2}[.][0-9]{3}[.][0-9]{3}[/][0-9]{4}[-][0-9]{2}", i): #cnpj
-            validacoes.append(validarCNPJ(i))
-        elif re.match(r'[\w.-]+@[\w.-]+', i):
+        if re.match(r'[\w.-]+@[\w.-]+', i):
             validacoes.append(True) #email
         elif re.match("^\+55[\(][0-9]{2}[\)][0-9]{4}-[0-9]{4}", i):
             validacoes.append(True)#telefone
-        elif re.match("[0-9A-F]{2}\.[0-9A-F]{2}\.[0-9A-F]{2}\.[0-9A-F]{2}", i):
+        elif re.match("[0-9A-Fa-f]{2}\.[0-9A-Fa-f]{2}\.[0-9A-Fa-f]{2}\.[0-9A-Fa-f]{2}", i):
             validacoes.append(validarChaveRapida(i))#chaverapida
         else:
             validacoes.append(False) #nada
@@ -161,8 +167,8 @@ if __name__ == "__main__":
             entradaTransacoes.clear()
         except EOFError:
             if False in validacoes:
-                print("False")
+                print("False", end = "")
             else:
-                print("True")
+                print("True", end = "")
             break
 
