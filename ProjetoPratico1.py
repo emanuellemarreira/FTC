@@ -7,7 +7,7 @@ entradaClientes = []
 validacoes = []
 
 
-def validarCpf(cpf): 
+def validarCPF(cpf): 
     tudo_igual = False
     if int(cpf[0]) == int(cpf[1]) == int(cpf[2]) == int(cpf[4]) == int(cpf[5]) == int(cpf[6]) == int(cpf[8]) == int(cpf[9]) == int(cpf[10]):
         tudo_igual = True
@@ -53,7 +53,7 @@ def validarChaveRapida(chave_rapida):
         return True
 
 def validarValor(valor):
-    if re.match("^R\$([0-9]{0,3}.)+,[0-9]{2}", valor):
+    if re.match("([0-9]{0,3}.)+,[0-9]{2}", valor):
         return True
     else:
         return False
@@ -65,8 +65,8 @@ def validarDataHora(datahora):
         ano = int(datahora[6]+datahora[7]+datahora[8]+datahora[9])
         hora = int(datahora[11]+datahora[12])
         minuto = int(datahora[14]+datahora[15])
-        if dia > 31 or mes > 12 or ano < 0 or hora > 23 or minuto > 59 or \
-        ((mes == 1 or mes == 3 or mes == 5 or mes == 7 or mes == 8 or mes == 10 or mes == 12) and dia < 31) or \
+        if mes > 12 or ano < 0 or hora > 23 or minuto > 59 or \
+        ((mes == 1 or mes == 3 or mes == 5 or mes == 7 or mes == 8 or mes == 10 or mes == 12) and dia > 31) or \
         ((mes == 4 or mes == 6 or mes == 9 or mes == 11) and dia > 30) or \
         (mes == 2 and dia > 29):
             return False
@@ -82,14 +82,14 @@ def validarCodigoSeguranca(cod):
         return False
 
 def verificarRepeticoes(entradaClientes):
-    contaRepeticoes = 0
     for i in entradaClientes:
+        contaRepeticoes = 0
         for j in entradaClientes:
             if i == j:
                 contaRepeticoes = contaRepeticoes + 1
-        if contaRepeticoes > 0:
-            return True
-    return False
+                if contaRepeticoes > 1: #nao pode ser igual pq tem a repeticao do inicio
+                    return False  # repeticoes retorna False
+    return True  #sem repeticoes retorna True
 
 
 def validarClientes(entradaClientes):
@@ -114,11 +114,9 @@ def validarChaves(entrada):
 
 
 def validarDadosTransacao(entradaTransacoes):
-    validarChaves(entradaTransacoes[0])
-    validarChaves(entradaTransacoes[1])
     validacoes.append(entradaTransacoes[2] == "R$")
     validacoes.append(validarValor(entradaTransacoes[3]))
-    validacoes.append(validarDataHora(entradaTransacoes[4] + " "+entradaTransacoes[5]))
+    validacoes.append(validarDataHora(entradaTransacoes[4] + " "+ entradaTransacoes[5]))
     validacoes.append(validarCodigoSeguranca(entradaTransacoes[6]))
 
 def validarTransacoes(entradaTransacoes):
@@ -128,10 +126,17 @@ def validarTransacoes(entradaTransacoes):
     validacoes.append(origem != destino)
     verifica_origem = True
     verifica_destino = True
-    for chaves in listaClientes:
-        if origem not in chaves:
+    for chaves in listaClientes: #ter certeza que a chave da origem está listada
+        if origem in chaves:
+            verifica_origem = True
+            break
+        else:
             verifica_origem = False
-        if destino not in chaves:
+    for chaves in listaClientes: #ter certeza que a chave de destino está listada
+        if destino in chaves:
+            verifica_destino = True
+            break
+        else:
             verifica_destino = False
     validacoes.append(verifica_origem)
     validacoes.append(verifica_destino)
@@ -148,16 +153,13 @@ if __name__ == "__main__":
         listaClientes.append(entradaClientes.copy())
         entradaClientes.clear()
 
-    listaTransacoes = []
     entradaTransacoes = []
     while True:
         try:
             entradaTransacoes.extend(input().split(" "))
             validarTransacoes(entradaTransacoes)
-            listaTransacoes.append(entradaTransacoes.copy())
             entradaTransacoes.clear()
-        except:
-            print(validacoes)
+        except EOFError:
             if False in validacoes:
                 print("False")
             else:
